@@ -10,59 +10,37 @@ import LayerSwitcher from "ol-layerswitcher"
 
 import VectorSource from "ol/source/Vector"
 import { GeoJSON, WFS } from "ol/format"
-import { Stroke, Style } from "ol/style"
-import {
-  and as andFilter,
-  equalTo as equalToFilter,
-  like as likeFilter
-} from "ol/format/filter"
+import { bbox as bboxStrategy } from "ol/loadingstrategy"
 
-// working in wfs data layer
-const vectorSource = new VectorSource()
+// TODO:  Working on wfs layer
+
+const vectorSource = new VectorSource({
+  format: new GeoJSON(),
+  url: function (extent) {
+    return (
+      "https://geodata.nationaalgeoregister.nl/nationaleparken/wfs?&" +
+      "request=GetCapabilities&service=wfs&" +
+      "outputFormat=application/json&srsname=EPSG:4326&" +
+      "bbox=" +
+      extent.join(",") +
+      ",EPSG:4326"
+    )
+  },
+  strategy: bboxStrategy
+})
+
 const vector = new VectorLayer({
   source: vectorSource,
-  style: new Style({
-    stroke: new Stroke({
-      color: "rgba(0, 0, 255, 1.0)",
-      width: 2
-    })
-  }),
-  title: "vector"
-})
-const raster = new TileLayer({
-  source: new XYZ({
-    url: "https://geodata.nationaalgeoregister.nl/nationaleparken/wfs?request=GetCapabilities&service=wfs",
-    maxZoom: 20
-  }),
-  title: "raster"
+  style: {
+    "stroke-width": 0.75,
+    "stroke-color": "white",
+    "fill-color": "rgba(100,100,100,0.25)"
+  },
+  title: "nationalParks",
+  visible: false
 })
 
-// generate a GetFeature request
-const featureRequest = new WFS().writeGetFeature({
-  srsName: "EPSG:3857",
-  featureNS: "http://openstreemap.org",
-  featurePrefix: "osm",
-  featureTypes: ["water_areas"],
-  outputFormat: "application/json"
-})
-
-// then post the request and add the received features to a layer
-fetch(
-  "https://geodata.nationaalgeoregister.nl/nationaleparken/wfs?request=GetCapabilities&service=wfs",
-  {
-    method: "POST",
-    body: new XMLSerializer().serializeToString(featureRequest)
-  }
-)
-  .then(function (response) {
-    return response.json()
-  })
-  .then(function (json) {
-    const features = new GeoJSON().readFeatures(json)
-    vectorSource.addFeatures(features)
-    map.getView().fit(vectorSource.getExtent())
-  })
-
+// main map object
 const map = new Map({
   target: "map",
   view: new View({
@@ -106,12 +84,11 @@ const baseLayerGroup = new Group({
     openStreetMapStandard,
     openStreetMapHumanitarian,
     stamenTerrain,
-    raster,
     vector
   ]
 })
 
-// adding layer on map
+// adding layers on map
 map.addLayer(baseLayerGroup)
 
 // layer switcher
@@ -127,7 +104,7 @@ map.on("click", function (e) {
 })
 
 const Maps = () => {
-  return <div id="map" className="  w-[100%] h-[500px]"></div>
+  return <div id="map" className="  w-[100%] h-[400px]"></div>
 }
 
 export default Maps
