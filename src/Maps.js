@@ -9,8 +9,9 @@ import XYZ from "ol/source/XYZ"
 import LayerSwitcher from "ol-layerswitcher"
 
 import VectorSource from "ol/source/Vector"
-import { GeoJSON, WFS } from "ol/format"
+import { GeoJSON } from "ol/format"
 import { bbox as bboxStrategy } from "ol/loadingstrategy"
+import { useEffect, useState } from "react"
 
 // TODO:  Working on wfs layer
 
@@ -18,12 +19,12 @@ const vectorSource = new VectorSource({
   format: new GeoJSON(),
   url: function (extent) {
     return (
-      "https://geodata.nationaalgeoregister.nl/nationaleparken/wfs?&" +
-      "request=GetCapabilities&service=wfs&" +
-      "outputFormat=application/json&srsname=EPSG:4326&" +
+      "https://geodata.nationaalgeoregister.nl/nationaleparken/wfs?service=WFS&" +
+      "version=2.0.0&request=GetFeature&typeName=nationaleparken&" +
+      "outputFormat=application/json&srsname=EPSG:3857&" +
       "bbox=" +
       extent.join(",") +
-      ",EPSG:4326"
+      ",EPSG:3857"
     )
   },
   strategy: bboxStrategy
@@ -33,24 +34,14 @@ const vector = new VectorLayer({
   source: vectorSource,
   style: {
     "stroke-width": 0.75,
-    "stroke-color": "white",
-    "fill-color": "rgba(100,100,100,0.25)"
+    "stroke-color": "green",
+    "fill-color": "rgba(0,255,0,0.5)"
   },
   title: "nationalParks",
   visible: false
 })
+//console.log(vector)
 
-// main map object
-const map = new Map({
-  target: "map",
-  view: new View({
-    center: [542907.6265707075, 6780056.159086264],
-    zoom: 2,
-    maxZoom: 10,
-    minZoom: 3,
-    rotation: 0
-  })
-})
 // Base Layer
 const openStreetMapStandard = new TileLayer({
   type: "base",
@@ -80,31 +71,47 @@ const stamenTerrain = new TileLayer({
 // Layer Group
 const baseLayerGroup = new Group({
   title: "Base maps",
-  layers: [
-    openStreetMapStandard,
-    openStreetMapHumanitarian,
-    stamenTerrain,
-    vector
-  ]
+  layers: [openStreetMapStandard, openStreetMapHumanitarian, stamenTerrain]
 })
-
-// adding layers on map
-map.addLayer(baseLayerGroup)
 
 // layer switcher
 const layerSwitcher = new LayerSwitcher({
   reverse: true,
   groupSelectStyle: "none"
 })
-map.addControl(layerSwitcher)
-
-// click event on map
-map.on("click", function (e) {
-  console.log(e.coordinate[0], e.coordinate[1])
-})
 
 const Maps = () => {
-  return <div id="map" className="  w-[100%] h-[400px]"></div>
+  // eslint-disable-next-line
+  const [map, setMap] = useState(null)
+
+  useEffect(() => {
+    // main map object
+    const mapObject = new Map({
+      target: "map",
+      view: new View({
+        center: [542907.6265707075, 6780056.159086264],
+        zoom: 2,
+        maxZoom: 10,
+        minZoom: 3,
+        rotation: 0
+      })
+    })
+
+    // adding layers on map
+    mapObject.addLayer(baseLayerGroup)
+
+    //Layer switcher
+    mapObject.addControl(layerSwitcher)
+
+    setMap(mapObject)
+
+    return () => {
+      mapObject.setTarget(undefined)
+      // console.log(mapObject)
+    }
+  }, [])
+
+  return <div id="map" className="  w-[100%] h-[800px]"></div>
 }
 
 export default Maps
