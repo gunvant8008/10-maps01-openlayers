@@ -1,69 +1,54 @@
-import React, { useState } from "react"
+import React from "react"
 
-const Sidebar = ({ layersArray, options }) => {
-  console.log(layersArray)
-  console.log(options)
-  const [selected, setSelected] = useState(false)
+const Sidebar = ({ layerVisibility, toggleLayerByName }) => {
+  const handleLayerToggle = (e, layerId) => {
+    const layerType = e.target.getAttribute("name")
+    toggleLayerByName(`${layerType}.${layerId}`, e.target.checked)
+  }
 
   return (
-    <div className=" p-4 flex flex-col gap-5  rounded-md bg-zinc-100 w-full h-full ">
+    <div className=" p-1 flex flex-col gap-5  rounded-md bg-zinc-100 w-full h-full overflow-auto">
       {/* Base Layer Section */}
       <div>
         <h1 className=" font-bold">Base Layer</h1>
         <div>
-          {layersArray.length &&
-            layersArray[0].values_.layers.array_.map(item => {
-              const handleChange = e => {
-                if (e.target.value === item.values_.title) {
-                  console.log(e.target.value)
-                  console.log(item.values_.title)
-                  options.setBase(prev => !prev)
-                  setSelected(prev => !prev)
-                } else {
-                  options.setBase(false)
-                  setSelected(false)
-                }
+          {layerVisibility.baselayers &&
+            Object.entries(layerVisibility.baselayers).map(
+              ([name, visible]) => {
+                return (
+                  <>
+                    <input
+                      key={name}
+                      checked={visible}
+                      type="radio"
+                      value={name}
+                      name="baselayers"
+                      onChange={e => handleLayerToggle(e, name)}
+                    />{" "}
+                    {name} <br />
+                  </>
+                )
               }
-              return (
-                <>
-                  <input
-                    key={item.ol_uid}
-                    checked={selected}
-                    type="radio"
-                    value={item.values_.title}
-                    name="baseLayer"
-                    onChange={handleChange}
-                  />{" "}
-                  {item.values_.title} <br />
-                </>
-              )
-            })}
+            )}
         </div>
       </div>
       {/* Overlay section */}
       <div>
         <h1 className=" font-bold">Overlay</h1>
         <div>
-          {layersArray.length &&
-            layersArray[1].values_.layers.array_.map(item => {
-              const handleChange = e => {
-                if (e.target.value === item.values_.title) {
-                  console.log(e.target.value)
-                  console.log(item.values_.title)
-                  options.setFeature(prev => !prev)
-                  setSelected(prev => !prev)
-                }
-              }
+          {layerVisibility.overlays &&
+            Object.entries(layerVisibility.overlays).map(([name, visible]) => {
               return (
                 <>
                   <input
-                    checked={selected}
-                    onChange={handleChange}
+                    key={name}
+                    checked={visible}
+                    onChange={e => handleLayerToggle(e, name)}
                     type="checkbox"
-                    value={item.values_.title}
-                    name="baseLayer"
+                    value={name}
+                    name="overlays"
                   />{" "}
-                  {item.values_.title} <br />
+                  {name} <br />
                 </>
               )
             })}
