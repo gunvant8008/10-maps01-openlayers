@@ -14,12 +14,14 @@ import zoomIn from "./assets/zoomIn.png"
 import zoomOut from "./assets/zoomOut.png"
 import DragBox from "ol/interaction/DragBox"
 import Control from "ol/control/Control"
+import { getCenter } from "ol/extent"
 
 const Maps = ({ baselayers, overlays }) => {
   const popupRef = useRef(null)
   const homeRef = useRef(null)
   const fsRef = useRef(null)
   const zoomInRef = useRef(null)
+  const zoomOutRef = useRef(null)
   // eslint-disable-next-line
   const [map, setMap] = useState(null)
 
@@ -153,32 +155,65 @@ const Maps = ({ baselayers, overlays }) => {
   }
 
   // adding zoom In control button
-  const [zoomInFlag, setZoomInFlag] = useState(false)
+  //const [zoomInFlag, setZoomInFlag] = useState(false)
   const zoomInElement = zoomInRef.current
-
   const zoomInControl = new Control({
     element: zoomInElement
   })
-
   const zoomInInteraction = new DragBox()
   zoomInInteraction.on("boxend", function () {
-    var zoomInExtent = zoomInInteraction.getGeometry().getExtent()
+    const zoomInExtent = zoomInInteraction.getGeometry().getExtent()
     map.getView().fit(zoomInExtent)
   })
-  const zoomInFn = e => {
-    e.preventDefault()
-    setZoomInFlag(prev => !prev)
+
+  let zoomInFlag = false
+  // const zoomInFlag = useRef(false)
+  const zoomInFn = () => {
+    // setZoomInFlag(!zoomInFlag)
+    zoomInFlag = !zoomInFlag
+    //zoomInFlag.current = !zoomInFlag.current
     if (zoomInFlag) {
-      mapElement.style.cursor = "zoom-in"
       map.addInteraction(zoomInInteraction)
+      mapElement.style.cursor = "zoom-in"
     } else {
       map.removeInteraction(zoomInInteraction)
       mapElement.style.cursor = "default"
     }
   }
-  console.log(zoomInFlag)
+
   if (map) {
     map.addControl(zoomInControl)
+  }
+
+  // adding zoom Out control button
+  const zoomOutElement = zoomOutRef.current
+  const zoomOutControl = new Control({
+    element: zoomOutElement
+  })
+  const zoomOutInteraction = new DragBox()
+  zoomOutInteraction.on("boxend", function () {
+    const zoomOutExtent = zoomOutInteraction.getGeometry().getExtent()
+    if (map) {
+      map.getView().setCenter(getCenter(zoomOutExtent))
+      map.getView().setZoom(map.getView().getZoom() - 1)
+      //  map.view.setZoom(map.view.getZoom() - 1)
+    }
+  })
+
+  let zoomOutFlag = false
+  const zoomOutFn = () => {
+    zoomOutFlag = !zoomOutFlag
+    if (zoomOutFlag) {
+      map.addInteraction(zoomOutInteraction)
+      mapElement.style.cursor = "zoom-out"
+    } else {
+      map.removeInteraction(zoomOutInteraction)
+      mapElement.style.cursor = "default"
+    }
+  }
+
+  if (map) {
+    map.addControl(zoomOutControl)
   }
 
   return (
@@ -218,8 +253,21 @@ const Maps = ({ baselayers, overlays }) => {
             : "absolute top-[115px] left-4 z-20 border-2 border-blue-300 rounded-md bg-blue-100 hover:bg-white p-1 "
         }
       >
-        <button onClick={e => zoomInFn(e)}>
-          <img className="w-[25px] h-[25px]" src={zoomIn} alt="home" />
+        <button onClick={() => zoomInFn()}>
+          <img className="w-[25px] h-[25px]" src={zoomIn} alt="zoomIn" />
+        </button>
+      </div>
+      {/* Zoom Out button */}
+      <div
+        ref={zoomOutRef}
+        className={
+          zoomOutFlag
+            ? " absolute top-[165px] left-4 z-20 border-2 border-blue-300 rounded-md bg-green-100 hover:bg-white p-1 "
+            : "absolute top-[165px] left-4 z-20 border-2 border-blue-300 rounded-md bg-blue-100 hover:bg-white p-1 "
+        }
+      >
+        <button onClick={() => zoomOutFn()}>
+          <img className="w-[25px] h-[25px]" src={zoomOut} alt="zoomOut" />
         </button>
       </div>
     </div>
